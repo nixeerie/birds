@@ -104,6 +104,35 @@ def get_filter_options(conn):
         'statusy': statusy
     }
 
+def get_statistics(conn, where_clause, values):
+    """Vrací agregační statistiky pro filtrovaná data."""
+    query = f'''
+    SELECT
+        COUNT(*) as pocet,
+        ROUND(AVG(delka_cm), 1) as prum_delka,
+        MAX(hmotnost_g) as max_hmotnost,
+        MIN(hmotnost_g) as min_hmotnost,
+        ROUND(AVG(hmotnost_g), 1) as prum_hmotnost,
+        ROUND(AVG(rozpeti_cm), 1) as prum_rozpeti
+    FROM ptaci WHERE {where_clause}
+    '''
+    
+    cursor = conn.cursor()
+    cursor.execute(query, values)
+    result = cursor.fetchone()
+    
+    # Konverze do dictionary pro snazší přístup v šabloně
+    stats = {
+        'pocet': result[0] if result[0] else 0,
+        'prum_delka': result[1] if result[1] else 0,
+        'max_hmotnost': result[2] if result[2] else 0,
+        'min_hmotnost': result[3] if result[3] else 0,
+        'prum_hmotnost': result[4] if result[4] else 0,
+        'prum_rozpeti': result[5] if result[5] else 0
+    }
+    
+    return stats
+
 @app.route("/")
 def dashboard():
     """Načte ptáky z databáze s příslušnými filtry a řazením a zobrazí je v dashboardu."""
@@ -119,6 +148,9 @@ def dashboard():
         # Bezpečné řazení
         order_by = get_sort_order(request.args)
         
+        # Agregační statistiky
+        stats = get_statistics(conn, where_clause, values)
+        
         query = f'SELECT * FROM ptaci WHERE {where_clause} ORDER BY {order_by}'
         
         cursor = conn.cursor()
@@ -130,7 +162,8 @@ def dashboard():
         return render_template('dashboard.html', 
                              ptaci=ptaci, 
                              filter_options=filter_options,
-                             filters=request.args)
+                             filters=request.args,
+                             stats=stats)
     except Exception as e:
         return f"Chyba: {e}", 500
 
