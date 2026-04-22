@@ -133,6 +133,79 @@ def get_statistics(conn, where_clause, values):
     
     return stats
 
+def get_druhy_podle_radu(conn, where_clause, values):
+    """Vrací počet druhů podle řádu."""
+    query = f'''
+    SELECT rad, COUNT(*) as pocet FROM ptaci 
+    WHERE {where_clause}
+    GROUP BY rad ORDER BY pocet DESC
+    '''
+    cursor = conn.cursor()
+    cursor.execute(query, values)
+    rows = cursor.fetchall()
+    
+    labels = [row[0] for row in rows if row[0]]
+    data = [row[1] for row in rows if row[0]]
+    
+    return labels, data
+
+def get_hmotnost_podle_potravy(conn, where_clause, values):
+    """Vrací průměrnou hmotnost podle typu potravy."""
+    query = f'''
+    SELECT typ_potravy, ROUND(AVG(hmotnost_g), 0) as prum
+    FROM ptaci WHERE {where_clause}
+    GROUP BY typ_potravy ORDER BY prum DESC
+    '''
+    cursor = conn.cursor()
+    cursor.execute(query, values)
+    rows = cursor.fetchall()
+    
+    labels = [row[0] for row in rows if row[0]]
+    data = [row[1] for row in rows if row[0]]
+    
+    return labels, data
+
+def get_migrace_rozdel(conn, where_clause, values):
+    """Vrací rozdělení tažních vs. netažních ptáků."""
+    query = f'''
+    SELECT migrace, COUNT(*) as pocet FROM ptaci
+    WHERE {where_clause}
+    GROUP BY migrace
+    '''
+    cursor = conn.cursor()
+    cursor.execute(query, values)
+    rows = cursor.fetchall()
+    
+    labels = []
+    data = []
+    
+    for row in rows:
+        if row[0] == 1:
+            labels.append('Tažný')
+        elif row[0] == 0:
+            labels.append('Netažný')
+        else:
+            continue
+        data.append(row[1])
+    
+    return labels, data
+
+def get_druhy_podle_kontinentu(conn, where_clause, values):
+    """Vrací počet druhů podle kontinentu."""
+    query = f'''
+    SELECT vyskyt_kontinent, COUNT(*) as pocet FROM ptaci
+    WHERE {where_clause}
+    GROUP BY vyskyt_kontinent ORDER BY pocet DESC
+    '''
+    cursor = conn.cursor()
+    cursor.execute(query, values)
+    rows = cursor.fetchall()
+    
+    labels = [row[0] for row in rows if row[0]]
+    data = [row[1] for row in rows if row[0]]
+    
+    return labels, data
+
 @app.route("/")
 def dashboard():
     """Načte ptáky z databáze s příslušnými filtry a řazením a zobrazí je v dashboardu."""
@@ -151,6 +224,12 @@ def dashboard():
         # Agregační statistiky
         stats = get_statistics(conn, where_clause, values)
         
+        # Data pro grafy
+        graf_rad_labels, graf_rad_data = get_druhy_podle_radu(conn, where_clause, values)
+        graf_potrava_labels, graf_potrava_data = get_hmotnost_podle_potravy(conn, where_clause, values)
+        graf_migrace_labels, graf_migrace_data = get_migrace_rozdel(conn, where_clause, values)
+        graf_kontinent_labels, graf_kontinent_data = get_druhy_podle_kontinentu(conn, where_clause, values)
+        
         query = f'SELECT * FROM ptaci WHERE {where_clause} ORDER BY {order_by}'
         
         cursor = conn.cursor()
@@ -163,7 +242,15 @@ def dashboard():
                              ptaci=ptaci, 
                              filter_options=filter_options,
                              filters=request.args,
-                             stats=stats)
+                             stats=stats,
+                             graf_rad_labels=graf_rad_labels,
+                             graf_rad_data=graf_rad_data,
+                             graf_potrava_labels=graf_potrava_labels,
+                             graf_potrava_data=graf_potrava_data,
+                             graf_migrace_labels=graf_migrace_labels,
+                             graf_migrace_data=graf_migrace_data,
+                             graf_kontinent_labels=graf_kontinent_labels,
+                             graf_kontinent_data=graf_kontinent_data)
     except Exception as e:
         return f"Chyba: {e}", 500
 

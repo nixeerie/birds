@@ -275,7 +275,45 @@
             opacity: 0.8;
             margin-top: 5px;
         }
+        
+        .charts-section {
+            background-color: white;
+            padding: 30px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .charts-title {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2em;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .chart-container {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #555;
+            text-align: center;
+        }
+        
+        canvas {
+            max-height: 300px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -475,6 +513,116 @@
                 </div>
             {% endif %}
         </div>
+        
+        <div class="charts-section">
+            <div class="charts-title">📊 Grafy</div>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Druhy podle řádu</div>
+                    <canvas id="chartRad"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">Tažní vs. Netažní</div>
+                    <canvas id="chartMigrace"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">Hmotnost podle typu potravy</div>
+                    <canvas id="chartPotrava"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">Druhy podle kontinentu</div>
+                    <canvas id="chartKontinent"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
+    
+    <script>
+        // Graf - Druhy podle řádu
+        new Chart(document.getElementById('chartRad'), {
+            type: 'bar',
+            data: {
+                labels: {{ graf_rad_labels|tojson }},
+                datasets: [{
+                    label: 'Počet druhů',
+                    data: {{ graf_rad_data|tojson }},
+                    backgroundColor: '#667eea',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+        
+        // Graf - Tažní vs. Netažní
+        new Chart(document.getElementById('chartMigrace'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ graf_migrace_labels|tojson }},
+                datasets: [{
+                    data: {{ graf_migrace_data|tojson }},
+                    backgroundColor: ['#667eea', '#f5576c'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+        
+        // Graf - Hmotnost podle potravy
+        new Chart(document.getElementById('chartPotrava'), {
+            type: 'bar',
+            data: {
+                labels: {{ graf_potrava_labels|tojson }},
+                datasets: [{
+                    label: 'Průměrná hmotnost (g)',
+                    data: {{ graf_potrava_data|tojson }},
+                    backgroundColor: '#43e97b',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+        
+        // Graf - Druhy podle kontinentu
+        new Chart(document.getElementById('chartKontinent'), {
+            type: 'bar',
+            data: {
+                labels: {{ graf_kontinent_labels|tojson }},
+                datasets: [{
+                    label: 'Počet druhů',
+                    data: {{ graf_kontinent_data|tojson }},
+                    backgroundColor: '#f093fb',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
