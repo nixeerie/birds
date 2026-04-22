@@ -290,6 +290,29 @@
                         <label for="hmotnost_max">Hmotnost max (g)</label>
                         <input type="number" name="hmotnost_max" id="hmotnost_max" placeholder="999999" value="{{ filters.get('hmotnost_max', '') }}">
                     </div>
+                    
+                    <div class="filter-group">
+                        <label for="razeni">Řadit podle</label>
+                        <select name="razeni" id="razeni">
+                            <option value="nazev" {% if filters.get('razeni') == 'nazev' or not filters.get('razeni') %}selected{% endif %}>Název</option>
+                            <option value="rad" {% if filters.get('razeni') == 'rad' %}selected{% endif %}>Řád</option>
+                            <option value="delka_cm" {% if filters.get('razeni') == 'delka_cm' %}selected{% endif %}>Délka (cm)</option>
+                            <option value="rozpeti_cm" {% if filters.get('razeni') == 'rozpeti_cm' %}selected{% endif %}>Rozpětí (cm)</option>
+                            <option value="hmotnost_g" {% if filters.get('razeni') == 'hmotnost_g' %}selected{% endif %}>Hmotnost (g)</option>
+                            <option value="snuska_ks" {% if filters.get('razeni') == 'snuska_ks' %}selected{% endif %}>Snůška (ks)</option>
+                            <option value="status_ohrozeni" {% if filters.get('razeni') == 'status_ohrozeni' %}selected{% endif %}>Status ohrožení</option>
+                            <option value="typ_potravy" {% if filters.get('razeni') == 'typ_potravy' %}selected{% endif %}>Typ potravy</option>
+                            <option value="vyskyt_kontinent" {% if filters.get('razeni') == 'vyskyt_kontinent' %}selected{% endif %}>Kontinent</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="smer">Směr řazení</label>
+                        <select name="smer" id="smer">
+                            <option value="ASC" {% if filters.get('smer') == 'ASC' or not filters.get('smer') %}selected{% endif %}>Vzestupně (A-Z)</option>
+                            <option value="DESC" {% if filters.get('smer') == 'DESC' %}selected{% endif %}>Sestupně (Z-A)</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <div class="filter-buttons">

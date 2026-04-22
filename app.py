@@ -4,6 +4,14 @@ import os
 
 app = Flask(__name__)
 
+# Povolené sloupce pro řazení (prevence SQL injection)
+ALLOWED_SORT_COLUMNS = {
+    "nazev", "vedecky_nazev", "rad", "celed",
+    "delka_cm", "rozpeti_cm", "hmotnost_g",
+    "status_ohrozeni", "typ_potravy", "migrace",
+    "vyskyt_kontinent", "snuska_ks",
+}
+
 def get_db():
     """Otevře spojení na databázi s row_factory pro přístup ke sloupcům podle názvu."""
     conn = sqlite3.connect('ptaci.db')
@@ -52,6 +60,23 @@ def build_query(params):
     where_clause = ' AND '.join(where_conditions) if where_conditions else '1=1'
     return where_clause, values
 
+def get_sort_order(params):
+    """Vracuje bezpečný ORDER BY klauzuli z parametrů."""
+    razeni = params.get('razeni', 'nazev')
+    smer = params.get('smer', 'ASC')
+    
+    # Validace sloupce
+    if razeni not in ALLOWED_SORT_COLUMNS:
+        razeni = 'nazev'
+    
+    # Validace směru
+    if smer.upper() not in ['ASC', 'DESC']:
+        smer = 'ASC'
+    else:
+        smer = smer.upper()
+    
+    return f'{razeni} {smer}'
+
 def get_filter_options(conn):
     """Načte unikátní hodnoty pro filtry z databáze."""
     cursor = conn.cursor()
@@ -81,7 +106,7 @@ def get_filter_options(conn):
 
 @app.route("/")
 def dashboard():
-    """Načte ptáky z databáze s příslušnými filtry a zobrazí je v dashboardu."""
+    """Načte ptáky z databáze s příslušnými filtry a řazením a zobrazí je v dashboardu."""
     try:
         conn = get_db()
         
@@ -90,7 +115,11 @@ def dashboard():
         
         # Sestavení query s filtry
         where_clause, values = build_query(request.args)
-        query = f'SELECT * FROM ptaci WHERE {where_clause} ORDER BY nazev ASC'
+        
+        # Bezpečné řazení
+        order_by = get_sort_order(request.args)
+        
+        query = f'SELECT * FROM ptaci WHERE {where_clause} ORDER BY {order_by}'
         
         cursor = conn.cursor()
         cursor.execute(query, values)
