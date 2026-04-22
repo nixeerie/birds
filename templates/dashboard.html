@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ptačí Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        table thead {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+        
+        table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            white-space: nowrap;
+        }
+        
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #555;
+        }
+        
+        table tbody tr:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+        
+        table tbody tr:nth-child(odd) {
+            background-color: #fafafa;
+        }
+        
+        .status-ohrozeni {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .status-ohrozeni.kriticky {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .status-ohrozeni.vymirici {
+            background-color: #ff922b;
+            color: white;
+        }
+        
+        .status-ohrozeni.ohrozeny {
+            background-color: #ffd43b;
+            color: #333;
+        }
+        
+        .status-ohrozeni.zranitelny {
+            background-color: #51cf66;
+            color: white;
+        }
+        
+        .status-ohrozeni.neohrozeny {
+            background-color: #94d82d;
+            color: white;
+        }
+        
+        .migrace-ano {
+            background-color: #d9e7ff;
+            color: #2f5cc0;
+            font-weight: 500;
+        }
+        
+        .migrace-ne {
+            background-color: #ffe0e0;
+            color: #c0222f;
+            font-weight: 500;
+        }
+        
+        .stats {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            text-align: center;
+            color: #666;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦅 Ptačí Dashboard</h1>
+        
+        <div class="table-wrapper">
+            {% if ptaci %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Název</th>
+                            <th>Vědecký název</th>
+                            <th>Řád</th>
+                            <th>Čeleď</th>
+                            <th>Délka (cm)</th>
+                            <th>Rozpětí (cm)</th>
+                            <th>Hmotnost (g)</th>
+                            <th>Status ohrožení</th>
+                            <th>Potrava</th>
+                            <th>Migrace</th>
+                            <th>Kontinent</th>
+                            <th>Snůška (ks)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ptak in ptaci %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><strong>{{ ptak['nazev'] }}</strong></td>
+                            <td><em>{{ ptak['vedecky_nazev'] }}</em></td>
+                            <td>{{ ptak['rad'] }}</td>
+                            <td>{{ ptak['celed'] }}</td>
+                            <td>{{ ptak['delka_cm'] if ptak['delka_cm'] else '-' }}</td>
+                            <td>{{ ptak['rozpeti_cm'] if ptak['rozpeti_cm'] else '-' }}</td>
+                            <td>{{ ptak['hmotnost_g'] if ptak['hmotnost_g'] else '-' }}</td>
+                            <td>
+                                {% if ptak['status_ohrozeni'] %}
+                                    <span class="status-ohrozeni {% if 'kriticky' in ptak['status_ohrozeni'].lower() %}kriticky{% elif 'vymírající' in ptak['status_ohrozeni'].lower() or 'vymiraci' in ptak['status_ohrozeni'].lower() %}vymirici{% elif 'ohrožený' in ptak['status_ohrozeni'].lower() or 'ohrozeny' in ptak['status_ohrozeni'].lower() %}ohrozeny{% elif 'zranitelný' in ptak['status_ohrozeni'].lower() or 'zranitelny' in ptak['status_ohrozeni'].lower() %}zranitelny{% else %}neohrozeny{% endif %}">
+                                        {{ ptak['status_ohrozeni'] }}
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ ptak['typ_potravy'] if ptak['typ_potravy'] else '-' }}</td>
+                            <td>
+                                {% if ptak['migrace'] == 1 %}
+                                    <span class="migrace-ano">Ano</span>
+                                {% elif ptak['migrace'] == 0 %}
+                                    <span class="migrace-ne">Ne</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ ptak['vyskyt_kontinent'] if ptak['vyskyt_kontinent'] else '-' }}</td>
+                            <td>{{ ptak['snuska_ks'] if ptak['snuska_ks'] else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="stats">Celkem ptáků v databázi: <strong>{{ ptaci | length }}</strong></div>
+            {% else %}
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <p>Žádní ptáci v databázi</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
