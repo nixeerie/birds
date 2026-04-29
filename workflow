@@ -142,6 +142,8 @@ Workflow je rozdělen do očíslovaných fází.
 
 ---
 
+## 6️⃣ Bonus implimentace
+
 ## 🌐 Vícejazyčnost (light verze)
 
 ### UI jazyky:

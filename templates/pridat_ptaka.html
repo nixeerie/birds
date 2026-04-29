@@ -168,6 +168,13 @@
             font-style: italic;
         }
 
+        .info-text {
+            font-size: 0.95em;
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
         .form-actions {
             display: flex;
             gap: 15px;
@@ -308,6 +315,10 @@
         <form method="POST" class="form-container">
             <div class="form-section">
                 <div class="section-title">🐦 Základní identifikace</div>
+                <p class="info-text">
+                    Povinné jsou pouze název a vědecký název. Pokud se objeví nějaké varování (např. extrémní číslo),
+                    záznam se může stále uložit a můžeš ho později doplnit.
+                </p>
                 <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">
                     <strong>Povinné:</strong> názov a vedecký názov<br>
                     <strong>Doporučené:</strong> řád a čeľad (pre lepšie vyhľadávanie a filtrovanie)
@@ -504,7 +515,39 @@
                     alert('Prosím vyplňte povinné polia: názov a vedecký názov.');
                     return false;
                 }
-                
+
+                const warnMessages = [];
+                const delka = Number(document.getElementById('delka_cm').value.trim());
+                const rozpeti = Number(document.getElementById('rozpeti_cm').value.trim());
+                const hmotnost = Number(document.getElementById('hmotnost_g').value.trim());
+                const snuska = Number(document.getElementById('snuska_ks').value.trim());
+
+                if (document.getElementById('delka_cm').value.trim()) {
+                    if (delka > 120) warnMessages.push('Délka je hodně vysoká, zkontroluj prosím hodnotu.');
+                    if (delka > 0 && delka < 5) warnMessages.push('Délka je hodně nízká, může to být chyba.');
+                }
+
+                if (document.getElementById('rozpeti_cm').value.trim()) {
+                    if (rozpeti > 320) warnMessages.push('Rozpětí je velmi velké, zkontroluj hodnotu.');
+                    if (rozpeti > 0 && rozpeti < 15) warnMessages.push('Rozpětí je velmi malé, zkontroluj hodnotu.');
+                }
+
+                if (document.getElementById('hmotnost_g').value.trim()) {
+                    if (hmotnost > 12000) warnMessages.push('Hmotnost je neobvykle vysoká, zkontroluj hodnotu.');
+                    if (hmotnost > 0 && hmotnost < 10) warnMessages.push('Hmotnost je velmi nízká, zkontroluj hodnotu.');
+                }
+
+                if (document.getElementById('snuska_ks').value.trim()) {
+                    if (snuska < 1 || snuska > 20) warnMessages.push('Počet vajec je mimo běžné rozmezí, ale může být stále platný.');
+                }
+
+                if (warnMessages.length) {
+                    if (!confirm('Zaznamenal jsem pár varování:\n\n' + warnMessages.join('\n') + '\n\nChceš pokračovat a uložit i přesto?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
                 // Basic scientific name validation
                 const scientificRegex = /^[A-Z][a-z]+ [a-z]+$/;
                 if (vedecky && !scientificRegex.test(vedecky)) {

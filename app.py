@@ -207,6 +207,36 @@ def get_druhy_podle_kontinentu(conn, where_clause, values):
     
     return labels, data
 
+def build_form_warnings(delka_cm, rozpeti_cm, hmotnost_g, snuska_ks, vyskyt_kontinent, migrace, typ_potravy, status_ohrozeni):
+    warnings = []
+
+    if delka_cm is not None:
+        if delka_cm < 5:
+            warnings.append('Zadaná délka je velmi nízká, zkontroluj prosím, zda je hodnota správná.')
+        elif delka_cm > 120:
+            warnings.append('Zadaná délka je velmi vysoká, ověř si prosím tento údaj.')
+
+    if rozpeti_cm is not None:
+        if rozpeti_cm < 15:
+            warnings.append('Rozpětí je velmi malé, ověř, zda to není překlep.')
+        elif rozpeti_cm > 320:
+            warnings.append('Rozpětí je neobvykle velké, zkontroluj prosím hodnotu.')
+
+    if hmotnost_g is not None:
+        if hmotnost_g < 10:
+            warnings.append('Hmotnost je nízká pro většinu ptáků, může jít o chybu.')
+        elif hmotnost_g > 12000:
+            warnings.append('Hmotnost je velmi vysoká, zkontroluj prosím údaj.')
+
+    if snuska_ks is not None:
+        if snuska_ks < 1 or snuska_ks > 20:
+            warnings.append('Počet vajec je mimo běžné rozmezí, ale může být stále platný.')
+
+    if not any([delka_cm, rozpeti_cm, hmotnost_g, vyskyt_kontinent, migrace, typ_potravy, status_ohrozeni, snuska_ks]):
+        warnings.append('Právě ukládáš záznam bez volitelných detailů. Můžeš je doplnit později.')
+
+    return warnings
+
 @app.route("/pridat_ptaka", methods=["GET", "POST"])
 def pridat_ptaka():
     """Formulář pro přidání nového ptáka."""
@@ -250,7 +280,27 @@ def pridat_ptaka():
                     return int(value) if value else None
                 except ValueError:
                     return None
-            
+
+            parsed_delka = safe_int(delka_cm)
+            parsed_rozpeti = safe_int(rozpeti_cm)
+            parsed_hmotnost = safe_int(hmotnost_g)
+            parsed_migrace = safe_int(migrace) if migrace else None
+            parsed_snuska = safe_int(snuska_ks)
+
+            warnings = build_form_warnings(
+                parsed_delka,
+                parsed_rozpeti,
+                parsed_hmotnost,
+                parsed_snuska,
+                vyskyt_kontinent or None,
+                parsed_migrace,
+                typ_potravy or None,
+                status_ohrozeni or None
+            )
+
+            for warning in warnings:
+                flash(warning, 'warning')
+
             # Vložení nového ptáka
             cursor.execute('''
                 INSERT INTO ptaci (nazev, vedecky_nazev, rad, celed, delka_cm, rozpeti_cm, 
@@ -258,9 +308,9 @@ def pridat_ptaka():
                                  status_ohrozeni, snuska_ks) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (nazev, vedecky_nazev, rad or None, celed or None, 
-                  safe_int(delka_cm), safe_int(rozpeti_cm), safe_int(hmotnost_g),
-                  vyskyt_kontinent or None, safe_int(migrace) if migrace else None,
-                  typ_potravy or None, status_ohrozeni or None, safe_int(snuska_ks)))
+                  parsed_delka, parsed_rozpeti, parsed_hmotnost,
+                  vyskyt_kontinent or None, parsed_migrace,
+                  typ_potravy or None, status_ohrozeni or None, parsed_snuska))
             
             conn.commit()
             conn.close()
