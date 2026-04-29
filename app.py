@@ -207,6 +207,118 @@ def get_druhy_podle_kontinentu(conn, where_clause, values):
     
     return labels, data
 
+def get_ptak_by_id(conn, ptak_id):
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM ptaci WHERE id = ?', (ptak_id,))
+    return cursor.fetchone()
+
+@app.route('/ptak/<int:ptak_id>')
+def detail_ptaka(ptak_id):
+    try:
+        conn = get_db()
+        ptak = get_ptak_by_id(conn, ptak_id)
+        conn.close()
+    except Exception as e:
+        return f"Chyba: {e}", 500
+
+    if not ptak:
+        return "Pták nebyl nalezen.", 404
+
+    return render_template('detail_ptaka.html', ptak=ptak)
+
+
+@app.route('/upravit_ptaka/<int:ptak_id>', methods=['GET', 'POST'])
+def upravit_ptaka(ptak_id):
+    try:
+        conn = get_db()
+        ptak = get_ptak_by_id(conn, ptak_id)
+    except Exception as e:
+        return f"Chyba: {e}", 500
+
+    if not ptak:
+        return "Pták nebyl nalezen.", 404
+
+    if request.method == 'POST':
+        action = request.form.get('action', 'save')
+        nazev = request.form.get('nazev', '').strip()
+        vedecky_nazev = request.form.get('vedecky_nazev', '').strip()
+        rad = request.form.get('rad', '').strip()
+        celed = request.form.get('celed', '').strip()
+        delka_cm = request.form.get('delka_cm', '').strip()
+        rozpeti_cm = request.form.get('rozpeti_cm', '').strip()
+        hmotnost_g = request.form.get('hmotnost_g', '').strip()
+        vyskyt_kontinent = request.form.get('vyskyt_kontinent', '').strip()
+        migrace = request.form.get('migrace', '').strip()
+        typ_potravy = request.form.get('typ_potravy', '').strip()
+        status_ohrozeni = request.form.get('status_ohrozeni', '').strip()
+        snuska_ks = request.form.get('snuska_ks', '').strip()
+
+        if not nazev or not vedecky_nazev:
+            flash("Název a vědecký název jsou povinné!", "error")
+            conn.close()
+            return redirect(url_for('upravit_ptaka', ptak_id=ptak_id))
+
+        def safe_int(value):
+            try:
+                return int(value) if value else None
+            except ValueError:
+                return None
+
+        parsed_delka = safe_int(delka_cm)
+        parsed_rozpeti = safe_int(rozpeti_cm)
+        parsed_hmotnost = safe_int(hmotnost_g)
+        parsed_migrace = safe_int(migrace) if migrace else None
+        parsed_snuska = safe_int(snuska_ks)
+
+        warnings = build_form_warnings(
+            parsed_delka,
+            parsed_rozpeti,
+            parsed_hmotnost,
+            parsed_snuska,
+            vyskyt_kontinent or None,
+            parsed_migrace,
+            typ_potravy or None,
+            status_ohrozeni or None
+        )
+
+        for warning in warnings:
+            flash(warning, 'warning')
+
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE ptaci SET nazev = ?, vedecky_nazev = ?, rad = ?, celed = ?, delka_cm = ?,
+                            rozpeti_cm = ?, hmotnost_g = ?, vyskyt_kontinent = ?, migrace = ?,
+                            typ_potravy = ?, status_ohrozeni = ?, snuska_ks = ?
+            WHERE id = ?
+        ''', (
+            nazev, vedecky_nazev, rad or None, celed or None,
+            parsed_delka, parsed_rozpeti, parsed_hmotnost,
+            vyskyt_kontinent or None, parsed_migrace,
+            typ_potravy or None, status_ohrozeni or None, parsed_snuska,
+            ptak_id
+        ))
+        conn.commit()
+        conn.close()
+
+        flash("Pták úspěšně upraven! 🐦", "success")
+        return redirect(url_for('detail_ptaka', ptak_id=ptak_id))
+
+    try:
+        filter_options = get_filter_options(conn)
+        conn.close()
+    except Exception:
+        filter_options = {'rady': [], 'celedi': []}
+
+    return render_template('pridat_ptaka.html',
+                           ptak=ptak,
+                           filter_options=filter_options,
+                           action_url=url_for('upravit_ptaka', ptak_id=ptak_id),
+                           page_title='Upravit ptáka',
+                           page_header='🛠️ Upravit ptáka',
+                           button_text='Uložit změny',
+                           edit_mode=True)
+
+
 def build_form_warnings(delka_cm, rozpeti_cm, hmotnost_g, snuska_ks, vyskyt_kontinent, migrace, typ_potravy, status_ohrozeni):
     warnings = []
 
@@ -241,6 +353,8 @@ def build_form_warnings(delka_cm, rozpeti_cm, hmotnost_g, snuska_ks, vyskyt_kont
 def pridat_ptaka():
     """Formulář pro přidání nového ptáka."""
     if request.method == "POST":
+        action = request.form.get('action', 'save')
+
         # Získání dat z formuláře
         nazev = request.form.get('nazev', '').strip()
         vedecky_nazev = request.form.get('vedecky_nazev', '').strip()
@@ -312,11 +426,14 @@ def pridat_ptaka():
                   vyskyt_kontinent or None, parsed_migrace,
                   typ_potravy or None, status_ohrozeni or None, parsed_snuska))
             
+            new_id = cursor.lastrowid
             conn.commit()
             conn.close()
             
             flash("Pták úspěšně přidán! 🐦", "success")
-            return redirect(url_for('dashboard'))
+            if action == 'save_and_add':
+                return redirect(url_for('pridat_ptaka'))
+            return redirect(url_for('detail_ptaka', ptak_id=new_id))
             
         except Exception as e:
             flash(f"Chyba při ukládání: {e}", "error")
@@ -330,7 +447,14 @@ def pridat_ptaka():
     except Exception as e:
         filter_options = {'rady': [], 'celedi': []}
     
-    return render_template('pridat_ptaka.html', filter_options=filter_options)
+    return render_template('pridat_ptaka.html',
+                           filter_options=filter_options,
+                           action_url=url_for('pridat_ptaka'),
+                           page_title='Přidat ptáka',
+                           page_header='➕ Přidat ptáka',
+                           button_text='Uložit ptáka',
+                           edit_mode=False,
+                           ptak=None)
 
 @app.route("/")
 def dashboard():
