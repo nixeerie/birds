@@ -55,10 +55,18 @@
             margin-bottom: 20px;
         }
 
-        .form-group.required label::after {
-            content: " *";
-            color: #ff6b6b;
-            font-weight: bold;
+        .form-group.optional {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .form-group.optional label::after {
+            content: " (volitelné)";
+            color: #28a745;
+            font-weight: normal;
+            font-size: 0.9em;
         }
 
         label {
@@ -164,6 +172,17 @@
             background-color: #fff3cd;
             color: #856404;
             border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .flash-warning::before {
+            content: "⚠️";
+            font-size: 1.2em;
         }
 
         @media (max-width: 768px) {
@@ -208,6 +227,10 @@
         <form method="POST" class="form-container">
             <div class="form-section">
                 <div class="section-title">🐦 Základní identifikace</div>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">
+                    <strong>Povinné:</strong> názov a vedecký názov<br>
+                    <strong>Doporučené:</strong> řád a čeľad (pre lepšie vyhľadávanie a filtrovanie)
+                </p>
 
                 <div class="form-group required">
                     <label for="nazev">Název ptáka</label>
@@ -220,6 +243,28 @@
                     <input type="text" id="vedecky_nazev" name="vedecky_nazev" placeholder="např. Turdus merula" required>
                     <div class="help-text">Latinský vědecký název (genus + species)</div>
                 </div>
+
+                <div class="form-group optional">
+                    <label for="rad">Řád</label>
+                    <input type="text" id="rad" name="rad" list="rady-list" placeholder="např. Pěvci">
+                    <datalist id="rady-list">
+                        {% for item in filter_options.rady %}
+                            <option value="{{ item }}">
+                        {% endfor %}
+                    </datalist>
+                    <div class="help-text">Volitelné, ale doporučené pre lepšiu klasifikáciu</div>
+                </div>
+
+                <div class="form-group optional">
+                    <label for="celed">Čeleď</label>
+                    <input type="text" id="celed" name="celed" list="celedi-list" placeholder="např. Drozdovití">
+                    <datalist id="celedi-list">
+                        {% for item in filter_options.celedi %}
+                            <option value="{{ item }}">
+                        {% endfor %}
+                    </datalist>
+                    <div class="help-text">Volitelné, ale doporučené pre lepšiu klasifikáciu</div>
+                </div>
             </div>
 
             <div class="form-actions">
@@ -228,5 +273,61 @@
             </div>
         </form>
     </div>
+
+    <script>
+        // Enhanced autocomplete and validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const nazevInput = document.getElementById('nazev');
+            const vedeckyInput = document.getElementById('vedecky_nazev');
+            
+            // Auto-capitalize first letter of each word in name
+            nazevInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\b\w/g, l => l.toUpperCase());
+            });
+            
+            // Auto-capitalize scientific name (Genus species format)
+            vedeckyInput.addEventListener('input', function() {
+                const words = this.value.split(' ');
+                if (words.length >= 1) {
+                    words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase();
+                }
+                if (words.length >= 2) {
+                    words[1] = words[1].toLowerCase();
+                }
+                this.value = words.join(' ');
+            });
+            
+            // Basic duplicate check on blur
+            vedeckyInput.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    // Could add AJAX call here for real-time duplicate checking
+                    console.log('Checking for duplicates:', this.value);
+                }
+            });
+            
+            // Form validation enhancement
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const nazev = nazevInput.value.trim();
+                const vedecky = vedeckyInput.value.trim();
+                
+                if (!nazev || !vedecky) {
+                    e.preventDefault();
+                    alert('Prosím vyplňte povinné polia: názov a vedecký názov.');
+                    return false;
+                }
+                
+                // Basic scientific name validation
+                const scientificRegex = /^[A-Z][a-z]+ [a-z]+$/;
+                if (vedecky && !scientificRegex.test(vedecky)) {
+                    if (!confirm('Vedecký názov nevyzerá správne (má byť vo formáte "Genus species"). Chcete pokračovať?')) {
+                        e.preventDefault();
+                        vedeckyInput.focus();
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -214,6 +214,8 @@ def pridat_ptaka():
         # Získání dat z formuláře
         nazev = request.form.get('nazev', '').strip()
         vedecky_nazev = request.form.get('vedecky_nazev', '').strip()
+        rad = request.form.get('rad', '').strip()
+        celed = request.form.get('celed', '').strip()
         
         # Základní validace
         if not nazev or not vedecky_nazev:
@@ -225,18 +227,18 @@ def pridat_ptaka():
             cursor = conn.cursor()
             
             # Kontrola duplicity
-            cursor.execute('SELECT id FROM ptaci WHERE nazev = ? OR vedecky_nazev = ?', 
+            cursor.execute('SELECT id, nazev, vedecky_nazev FROM ptaci WHERE nazev = ? OR vedecky_nazev = ?', 
                          (nazev, vedecky_nazev))
             existing = cursor.fetchone()
             
             if existing:
-                flash("Tento pták už možná existuje v databázi.", "warning")
+                flash(f"Tento pták už možná existuje: {existing[1]} ({existing[2]})", "warning")
             
             # Vložení nového ptáka
             cursor.execute('''
-                INSERT INTO ptaci (nazev, vedecky_nazev) 
-                VALUES (?, ?)
-            ''', (nazev, vedecky_nazev))
+                INSERT INTO ptaci (nazev, vedecky_nazev, rad, celed) 
+                VALUES (?, ?, ?, ?)
+            ''', (nazev, vedecky_nazev, rad if rad else None, celed if celed else None))
             
             conn.commit()
             conn.close()
@@ -249,7 +251,14 @@ def pridat_ptaka():
             return redirect(url_for('pridat_ptaka'))
     
     # GET request - zobrazit formulář
-    return render_template('pridat_ptaka.html')
+    try:
+        conn = get_db()
+        filter_options = get_filter_options(conn)
+        conn.close()
+    except Exception as e:
+        filter_options = {'rady': [], 'celedi': []}
+    
+    return render_template('pridat_ptaka.html', filter_options=filter_options)
 
 @app.route("/")
 def dashboard():
