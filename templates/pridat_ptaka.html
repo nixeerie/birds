@@ -332,8 +332,8 @@
 
                 <div class="form-group required">
                     <label for="vedecky_nazev">Vědecký název</label>
-                    <input type="text" id="vedecky_nazev" name="vedecky_nazev" placeholder="např. Turdus merula" required value="{{ ptak['vedecky_nazev'] if ptak else '' }}">
-                    <div class="help-text">Latinský vědecký název (genus + species)</div>
+                    <input type="text" id="vedecky_nazev" name="vedecky_nazev" placeholder="např. Turdus merula" value="{{ ptak['vedecky_nazev'] if ptak else '' }}">
+                    <div class="help-text">Latinský vědecký název (doporučeno, ale můžeš uložit i bez něj)</div>
                 </div>
 
                 <div class="form-group optional">
@@ -513,10 +513,18 @@
                 const nazev = nazevInput.value.trim();
                 const vedecky = vedeckyInput.value.trim();
                 
-                if (!nazev || !vedecky) {
+                if (!nazev) {
                     e.preventDefault();
-                    alert('Prosím vyplňte povinné polia: názov a vedecký názov.');
+                    alert('Prosím vyplňte povinné pole: názov ptáka.');
                     return false;
+                }
+
+                if (!vedecky) {
+                    if (!confirm('Vědecký název chybí. Chcete uložit záznam jako neúplný?')) {
+                        e.preventDefault();
+                        vedeckyInput.focus();
+                        return false;
+                    }
                 }
 
                 const warnMessages = [];
@@ -554,7 +562,7 @@
                 // Basic scientific name validation
                 const scientificRegex = /^[A-Z][a-z]+ [a-z]+$/;
                 if (vedecky && !scientificRegex.test(vedecky)) {
-                    if (!confirm('Vedecký názov nevyzerá správne (má byť vo formáte "Genus species"). Chcete pokračovať?')) {
+                    if (!confirm('Vedecký názov nevyzerá správně (má být ve formátu "Genus species"). Chcete pokračovat?')) {
                         e.preventDefault();
                         vedeckyInput.focus();
                         return false;

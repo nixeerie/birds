@@ -253,10 +253,13 @@ def upravit_ptaka(ptak_id):
         status_ohrozeni = request.form.get('status_ohrozeni', '').strip()
         snuska_ks = request.form.get('snuska_ks', '').strip()
 
-        if not nazev or not vedecky_nazev:
-            flash("Název a vědecký název jsou povinné!", "error")
+        if not nazev:
+            flash("Název je povinný!", "error")
             conn.close()
             return redirect(url_for('upravit_ptaka', ptak_id=ptak_id))
+
+        if not vedecky_nazev:
+            flash("Vědecký název chybí, uložíno jako neúplný záznam.", "warning")
 
         def safe_int(value):
             try:
@@ -372,9 +375,12 @@ def pridat_ptaka():
         snuska_ks = request.form.get('snuska_ks', '').strip()
         
         # Základní validace
-        if not nazev or not vedecky_nazev:
-            flash("Název a vědecký název jsou povinné!", "error")
+        if not nazev:
+            flash("Název je povinný!", "error")
             return redirect(url_for('pridat_ptaka'))
+
+        if not vedecky_nazev:
+            flash("Vědecký název chybí, uložíno jako neúplný záznam.", "warning")
         
         try:
             conn = get_db()
