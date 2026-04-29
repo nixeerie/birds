@@ -18,7 +18,7 @@
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             background-color: white;
             border-radius: 8px;
@@ -32,6 +32,28 @@
             padding: 30px;
             text-align: center;
             font-size: 2.5em;
+            position: relative;
+        }
+        
+        .add-bird-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+        }
+        
+        .add-bird-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
         }
         
         .table-wrapper {
@@ -291,33 +313,78 @@
         
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
         }
         
         .chart-container {
             background-color: #f8f9fa;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
         
         .chart-title {
             font-weight: 600;
-            margin-bottom: 15px;
-            color: #555;
+            margin-bottom: 20px;
+            color: #333;
             text-align: center;
+            font-size: 1.1em;
         }
         
         canvas {
-            max-height: 300px;
+            width: 100% !important;
+            height: 250px !important;
+            max-height: 250px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .chart-container {
+                padding: 15px;
+            }
+            
+            canvas {
+                height: 200px !important;
+                max-height: 200px;
+            }
+            
+            .container {
+                margin: 10px;
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+                padding: 20px;
+                position: relative;
+            }
+            
+            .add-bird-btn {
+                position: static;
+                display: block;
+                margin: 10px auto 0;
+                width: fit-content;
+            }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>🦅 Ptačí Dashboard</h1>
+        <h1>🦅 Ptačí Dashboard
+            <a href="{{ url_for('pridat_ptaka') }}" class="add-bird-btn">➕ Přidat ptáka</a>
+        </h1>
         
         <div class="filters-section">
             <div class="filters-title">🔍 Filtry</div>
@@ -450,6 +517,31 @@
             </div>
         </div>
         
+        <div class="charts-section">
+            <div class="charts-title">📊 Grafy</div>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Druhy podle řádu</div>
+                    <canvas id="chartRad"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">Tažní vs. Netažní</div>
+                    <canvas id="chartMigrace"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">Hmotnost podle typu potravy</div>
+                    <canvas id="chartPotrava"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">Druhy podle kontinentu</div>
+                    <canvas id="chartKontinent"></canvas>
+                </div>
+            </div>
+        </div>
+        
         <div class="table-wrapper">
             {% if ptaci %}
                 <table>
@@ -513,31 +605,6 @@
                 </div>
             {% endif %}
         </div>
-        
-        <div class="charts-section">
-            <div class="charts-title">📊 Grafy</div>
-            <div class="charts-grid">
-                <div class="chart-container">
-                    <div class="chart-title">Druhy podle řádu</div>
-                    <canvas id="chartRad"></canvas>
-                </div>
-                
-                <div class="chart-container">
-                    <div class="chart-title">Tažní vs. Netažní</div>
-                    <canvas id="chartMigrace"></canvas>
-                </div>
-                
-                <div class="chart-container">
-                    <div class="chart-title">Hmotnost podle typu potravy</div>
-                    <canvas id="chartPotrava"></canvas>
-                </div>
-                
-                <div class="chart-container">
-                    <div class="chart-title">Druhy podle kontinentu</div>
-                    <canvas id="chartKontinent"></canvas>
-                </div>
-            </div>
-        </div>
     </div>
     
     <script>
@@ -550,14 +617,46 @@
                     label: 'Počet druhů',
                     data: {{ graf_rad_data|tojson }},
                     backgroundColor: '#667eea',
-                    borderRadius: 4,
+                    borderColor: '#5568d3',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff'
+                    }
+                },
                 scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { 
+                            stepSize: 1,
+                            color: '#666'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#666'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
                 }
             }
         });
@@ -571,13 +670,45 @@
                     data: {{ graf_migrace_data|tojson }},
                     backgroundColor: ['#667eea', '#f5576c'],
                     borderColor: '#fff',
-                    borderWidth: 2
+                    borderWidth: 3,
+                    hoverBorderWidth: 4,
+                    hoverBorderColor: '#fff'
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: { 
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true,
+                    duration: 1000,
+                    easing: 'easeOutQuart'
                 }
             }
         });
@@ -591,14 +722,50 @@
                     label: 'Průměrná hmotnost (g)',
                     data: {{ graf_potrava_data|tojson }},
                     backgroundColor: '#43e97b',
-                    borderRadius: 4,
+                    borderColor: '#38f9d7',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        callbacks: {
+                            label: function(context) {
+                                return `Průměrná hmotnost: ${context.parsed.y} g`;
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    y: { beginAtZero: true }
+                    y: { 
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#666'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#666'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
                 }
             }
         });
@@ -611,15 +778,47 @@
                 datasets: [{
                     label: 'Počet druhů',
                     data: {{ graf_kontinent_data|tojson }},
-                    backgroundColor: '#f093fb',
-                    borderRadius: 4,
+                    backgroundColor: '#4facfe',
+                    borderColor: '#00f2fe',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff'
+                    }
+                },
                 scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { 
+                            stepSize: 1,
+                            color: '#666'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#666'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
                 }
             }
         });

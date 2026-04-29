@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 import os
 
 app = Flask(__name__)
+app.secret_key = 'tajny_kluc_pre_flash'  # For flash messages
 
 # Povolené sloupce pro řazení (prevence SQL injection)
 ALLOWED_SORT_COLUMNS = {
@@ -205,6 +206,50 @@ def get_druhy_podle_kontinentu(conn, where_clause, values):
     data = [row[1] for row in rows if row[0]]
     
     return labels, data
+
+@app.route("/pridat_ptaka", methods=["GET", "POST"])
+def pridat_ptaka():
+    """Formulář pro přidání nového ptáka."""
+    if request.method == "POST":
+        # Získání dat z formuláře
+        nazev = request.form.get('nazev', '').strip()
+        vedecky_nazev = request.form.get('vedecky_nazev', '').strip()
+        
+        # Základní validace
+        if not nazev or not vedecky_nazev:
+            flash("Název a vědecký název jsou povinné!", "error")
+            return redirect(url_for('pridat_ptaka'))
+        
+        try:
+            conn = get_db()
+            cursor = conn.cursor()
+            
+            # Kontrola duplicity
+            cursor.execute('SELECT id FROM ptaci WHERE nazev = ? OR vedecky_nazev = ?', 
+                         (nazev, vedecky_nazev))
+            existing = cursor.fetchone()
+            
+            if existing:
+                flash("Tento pták už možná existuje v databázi.", "warning")
+            
+            # Vložení nového ptáka
+            cursor.execute('''
+                INSERT INTO ptaci (nazev, vedecky_nazev) 
+                VALUES (?, ?)
+            ''', (nazev, vedecky_nazev))
+            
+            conn.commit()
+            conn.close()
+            
+            flash("Pták úspěšně přidán! 🐦", "success")
+            return redirect(url_for('dashboard'))
+            
+        except Exception as e:
+            flash(f"Chyba při ukládání: {e}", "error")
+            return redirect(url_for('pridat_ptaka'))
+    
+    # GET request - zobrazit formulář
+    return render_template('pridat_ptaka.html')
 
 @app.route("/")
 def dashboard():
