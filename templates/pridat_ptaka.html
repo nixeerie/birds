@@ -55,18 +55,81 @@
             margin-bottom: 20px;
         }
 
-        .form-group.optional {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 4px solid #28a745;
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
         }
-        
-        .form-group.optional label::after {
-            content: " (volitelné)";
-            color: #28a745;
+
+        .collapsible-section {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        .collapsible-title {
+            padding: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .collapsible-title:hover {
+            background: linear-gradient(135deg, #e883f0 0%, #e54b61 100%);
+        }
+
+        .collapsible-title::-webkit-details-marker {
+            display: none;
+        }
+
+        .collapsible-title::after {
+            content: "▶";
+            transition: transform 0.2s ease;
+            font-size: 0.8em;
+        }
+
+        .collapsible-section[open] .collapsible-title::after {
+            transform: rotate(90deg);
+        }
+
+        .collapse-hint {
+            font-size: 0.8em;
+            opacity: 0.8;
             font-weight: normal;
-            font-size: 0.9em;
+        }
+
+        .collapsible-content {
+            padding: 20px;
+        }
+
+        .subsection {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .subsection:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .subsection-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         label {
@@ -199,6 +262,24 @@
                 padding: 20px;
             }
 
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .collapsible-title {
+                padding: 15px;
+                font-size: 1.1em;
+            }
+
+            .collapsible-content {
+                padding: 15px;
+            }
+
+            .subsection {
+                margin-bottom: 20px;
+            }
+
             .form-actions {
                 flex-direction: column;
             }
@@ -267,6 +348,113 @@
                 </div>
             </div>
 
+            <div class="form-section">
+                <details class="collapsible-section">
+                    <summary class="section-title collapsible-title">
+                        📊 Volitelné detaily
+                        <span class="collapse-hint">(kliknite pre rozbalenie)</span>
+                    </summary>
+                    
+                    <div class="collapsible-content">
+                        <div class="subsection">
+                            <h4 class="subsection-title">📏 Velikost</h4>
+                            <div class="form-grid">
+                                <div class="form-group optional">
+                                    <label for="delka_cm">Délka (cm)</label>
+                                    <input type="number" id="delka_cm" name="delka_cm" placeholder="cca 25" min="1" max="300">
+                                    <div class="help-text">Približná dĺžka tela</div>
+                                </div>
+                                
+                                <div class="form-group optional">
+                                    <label for="rozpeti_cm">Rozpětí (cm)</label>
+                                    <input type="number" id="rozpeti_cm" name="rozpeti_cm" placeholder="cca 40" min="1" max="400">
+                                    <div class="help-text">Rozpätie krídel</div>
+                                </div>
+                                
+                                <div class="form-group optional">
+                                    <label for="hmotnost_g">Hmotnost (g)</label>
+                                    <input type="number" id="hmotnost_g" name="hmotnost_g" placeholder="cca 80" min="1" max="15000">
+                                    <div class="help-text">Približná hmotnosť</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="subsection">
+                            <h4 class="subsection-title">🌍 Ekologie</h4>
+                            <div class="form-grid">
+                                <div class="form-group optional">
+                                    <label for="vyskyt_kontinent">Kontinent výskytu</label>
+                                    <select id="vyskyt_kontinent" name="vyskyt_kontinent">
+                                        <option value="">-- Vyberte --</option>
+                                        <option value="Afrika">Afrika</option>
+                                        <option value="Ázia">Ázia</option>
+                                        <option value="Európa">Európa</option>
+                                        <option value="Severní Amerika">Severní Amerika</option>
+                                        <option value="Jižní Amerika">Jižní Amerika</option>
+                                        <option value="Austrálie">Austrálie</option>
+                                        <option value="Antarktida">Antarktida</option>
+                                    </select>
+                                    <div class="help-text">Hlavný kontinent výskytu</div>
+                                </div>
+                                
+                                <div class="form-group optional">
+                                    <label for="migrace">Migrace</label>
+                                    <select id="migrace" name="migrace">
+                                        <option value="">-- Vyberte --</option>
+                                        <option value="1">Áno (tažný)</option>
+                                        <option value="0">Nie (netažný)</option>
+                                    </select>
+                                    <div class="help-text">Či vták migruje</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="subsection">
+                            <h4 class="subsection-title">🍽️ Potrava</h4>
+                            <div class="form-group optional">
+                                <label for="typ_potravy">Typ potravy</label>
+                                <select id="typ_potravy" name="typ_potravy">
+                                    <option value="">-- Vyberte --</option>
+                                    <option value="hmyz">Hmyz</option>
+                                    <option value="semena">Semena</option>
+                                    <option value="ovoce">Ovoce</option>
+                                    <option value="maso">Maso</option>
+                                    <option value="ryby">Ryby</option>
+                                    <option value="všežravec">Všežravec</option>
+                                    <option value="nektar">Nektar</option>
+                                </select>
+                                <div class="help-text">Hlavný typ potravy</div>
+                            </div>
+                        </div>
+
+                        <div class="subsection">
+                            <h4 class="subsection-title">⚠️ Ohrožení</h4>
+                            <div class="form-group optional">
+                                <label for="status_ohrozeni">Status ohrožení</label>
+                                <select id="status_ohrozeni" name="status_ohrozeni">
+                                    <option value="">-- Vyberte --</option>
+                                    <option value="málo dotčený">Málo dotčený</option>
+                                    <option value="téměř ohrožený">Téměř ohrožený</option>
+                                    <option value="ohrožený">Ohrožený</option>
+                                    <option value="kriticky ohrožený">Kriticky ohrožený</option>
+                                    <option value="vyhynulý">Vyhynulý</option>
+                                </select>
+                                <div class="help-text">Aktuálny status ochrany</div>
+                            </div>
+                        </div>
+
+                        <div class="subsection">
+                            <h4 class="subsection-title">🥚 Rozmnožování</h4>
+                            <div class="form-group optional">
+                                <label for="snuska_ks">Počet vajec (ks)</label>
+                                <input type="number" id="snuska_ks" name="snuska_ks" placeholder="cca 4" min="1" max="20">
+                                <div class="help-text">Približný počet vajec v snôške</div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">💾 Uložit ptáka</button>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">⬅️ Zpět na dashboard</a>
@@ -326,6 +514,21 @@
                         return false;
                     }
                 }
+            });
+            
+            // Collapsible section enhancement
+            const details = document.querySelector('.collapsible-section');
+            const summary = details.querySelector('summary');
+            
+            summary.addEventListener('click', function() {
+                // Small delay to allow the open/close animation
+                setTimeout(() => {
+                    if (details.open) {
+                        summary.querySelector('.collapse-hint').textContent = '(kliknite pre zatvorenie)';
+                    } else {
+                        summary.querySelector('.collapse-hint').textContent = '(kliknite pre rozbalenie)';
+                    }
+                }, 10);
             });
         });
     </script>

@@ -217,6 +217,16 @@ def pridat_ptaka():
         rad = request.form.get('rad', '').strip()
         celed = request.form.get('celed', '').strip()
         
+        # Volitelné detaily
+        delka_cm = request.form.get('delka_cm', '').strip()
+        rozpeti_cm = request.form.get('rozpeti_cm', '').strip()
+        hmotnost_g = request.form.get('hmotnost_g', '').strip()
+        vyskyt_kontinent = request.form.get('vyskyt_kontinent', '').strip()
+        migrace = request.form.get('migrace', '').strip()
+        typ_potravy = request.form.get('typ_potravy', '').strip()
+        status_ohrozeni = request.form.get('status_ohrozeni', '').strip()
+        snuska_ks = request.form.get('snuska_ks', '').strip()
+        
         # Základní validace
         if not nazev or not vedecky_nazev:
             flash("Název a vědecký název jsou povinné!", "error")
@@ -234,11 +244,23 @@ def pridat_ptaka():
             if existing:
                 flash(f"Tento pták už možná existuje: {existing[1]} ({existing[2]})", "warning")
             
+            # Příprava hodnot pro volitelné pole
+            def safe_int(value):
+                try:
+                    return int(value) if value else None
+                except ValueError:
+                    return None
+            
             # Vložení nového ptáka
             cursor.execute('''
-                INSERT INTO ptaci (nazev, vedecky_nazev, rad, celed) 
-                VALUES (?, ?, ?, ?)
-            ''', (nazev, vedecky_nazev, rad if rad else None, celed if celed else None))
+                INSERT INTO ptaci (nazev, vedecky_nazev, rad, celed, delka_cm, rozpeti_cm, 
+                                 hmotnost_g, vyskyt_kontinent, migrace, typ_potravy, 
+                                 status_ohrozeni, snuska_ks) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (nazev, vedecky_nazev, rad or None, celed or None, 
+                  safe_int(delka_cm), safe_int(rozpeti_cm), safe_int(hmotnost_g),
+                  vyskyt_kontinent or None, safe_int(migrace) if migrace else None,
+                  typ_potravy or None, status_ohrozeni or None, safe_int(snuska_ks)))
             
             conn.commit()
             conn.close()
